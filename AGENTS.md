@@ -262,7 +262,7 @@ When suggesting an update:
 - Gherkin scenarios are generated from specs, **not from code** — never reverse-engineer scenarios from existing implementation
 - If a spec is ambiguous, surface the ambiguity as a question before writing the scenario — do not resolve ambiguity silently in code
 - Scenarios must be written in **business language** — no Python, no HTTP verbs, no field names in Given/When/Then steps
-- Step definitions must use the **async client fixture** — never use synchronous TestClient in BDD tests
+- Step definitions must use the **`sync_client` fixture** (a `starlette.testclient.TestClient` defined in `tests/bdd/conftest.py`) — all BDD step functions must be synchronous (see §9 for why)
 - **Never rewrite a scenario to match broken behaviour** — fix the code, not the scenario
 - Compliance-related behaviours must have a Gherkin scenario — they are the audit trail
 
@@ -299,7 +299,8 @@ Before declaring a task complete, verify:
 - **CORS:** `ALLOWED_ORIGINS` must be set explicitly in production — wildcard `*` is only permitted in local dev
 - **Pydantic v2:** This project uses Pydantic v2 — use `model_validate()` not `parse_obj()`, and `model_dump()` not `dict()`
 - **Redis cache:** Cache keys follow the pattern `{resource}:{id}:{version}` — do not invent new patterns without updating this doc
-- **pytest-bdd async:** pytest-bdd does not natively support async steps — `asyncio_mode = "auto"` is already configured in `pyproject.toml`, do not remove it
+- **pytest-bdd async (confirmed broken in 8.x):** pytest-bdd 8.x does not await async step functions — even with `target_fixture`, the coroutine is passed unawaited to subsequent steps. All BDD step functions must be **synchronous**. Use the `sync_client` fixture (`starlette.testclient.TestClient`) in `tests/bdd/conftest.py` for HTTP calls in steps. `asyncio_mode = "auto"` is still required and must not be removed — it handles async fixtures like `db_engine` and `sync_client` setup.
+- **passlib + bcrypt incompatibility:** `passlib 1.7.4` is incompatible with `bcrypt 4.x+` (the `__about__` attribute was removed). Do not add `passlib` as a dependency — use `bcrypt` directly. See `src/core/security.py` for the correct usage pattern (`bcrypt.hashpw` / `bcrypt.checkpw`).
 - **Gherkin directionality:** Scenarios describe WHAT the system guarantees, not HOW it works — step definitions handle the how
 - **Symlink:** CLAUDE.md is a symlink to this file — always edit AGENTS.md, never CLAUDE.md directly
 
@@ -334,3 +335,6 @@ Before declaring a task complete, verify:
 | 2025-02-21 | CLAUDE.md is now a symlink to AGENTS.md               | Natu Lauchande |
 | 2025-02-21 | Added spec types table and dual-spec rule             | Natu Lauchande |
 | 2025-02-21 | Replaced feature kickoff prompt with auto protocol    | Natu Lauchande |
+| 2026-02-21 | Corrected BDD client rule: steps must use sync_client | Claude         |
+| 2026-02-21 | Added pytest-bdd 8.x async gotcha with full workaround| Claude         |
+| 2026-02-21 | Added passlib/bcrypt incompatibility gotcha           | Claude         |
