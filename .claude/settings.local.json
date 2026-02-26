@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv sync:*)",
+      "Bash(tail:*)",
+      "Bash(export PATH=\"/opt/homebrew/bin:$PATH\" && uv run pytest --tb=short -q 2>&1)"
+    ]
+  }
+}
