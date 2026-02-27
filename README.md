@@ -5,6 +5,107 @@ A reference implementation of a VibeOps-primed FastAPI environment.
 Part of the [VibeOps framework](https://github.com/natulauchande/vibeops) — a systematic approach to AI-assisted development that moves beyond vibe coding to structured, measurable, self-improving engineering environments.
 
 ---
+## Results of experiment with this branch vs Yolo branch ( no Agents branch)
+
+# VibeOps Configuration Effectiveness — Experiment Results
+
+> **Research Question:** Does a VibeOps-primed environment (AGENTS.md) produce measurably better AI-generated code than an unprimed environment?
+
+## Experimental Setup
+
+| Parameter | Value |
+|-----------|-------|
+| **Model** | Claude Sonnet 4 (via Claude Code) |
+| **Template Repo** | `nlauchande/fastapi-vibeops-template` |
+| **Task** | User Management API (CRUD + auth + validation) |
+| **Condition A** | No AGENTS.md — raw Claude Code |
+| **Condition B** | AGENTS.md + CLAUDE.md symlink present |
+
+Same model. Same template. Same prompt. Different environment.
+
+---
+
+## Composite Vibecheck Score
+
+| Condition | Vibecheck Score | Rating |
+|-----------|:--------------:|--------|
+| **A — Control (No VibeOps)** | **0.510** | ⚠️ |
+| **B — VibeOps (AGENTS.md)** | **0.932** | ✓ |
+| **Δ (B − A)** | **+0.422 (+82.8%)** | |
+
+---
+
+## Dimension Breakdown
+
+| Dimension | Weight | Condition A | Condition B | Δ (Raw) | Δ (Weighted) |
+|-----------|:------:|:-----------:|:-----------:|:-------:|:------------:|
+| Architecture | 30% | 0.70 | 0.95 | +0.25 | +0.075 |
+| Security | 20% | 0.30 | 0.95 | **+0.65** | **+0.130** |
+| Testing | 20% | 0.60 | 0.90 | +0.30 | +0.060 |
+| Code Quality | 15% | 0.80 | 0.90 | +0.10 | +0.015 |
+| Spec Adherence | 15% | 0.00 | 0.95 | **+0.95** | **+0.142** |
+| **Composite** | **100%** | **0.510** | **0.932** | **+0.422** | **+0.422** |
+
+---
+
+## Structural Output Comparison
+
+| Metric | Condition A | Condition B | Δ |
+|--------|:----------:|:----------:|:-:|
+| Python files | 17 | 35 | +18 |
+| Test files | 2 | 5 | +3 |
+| Test lines | 146 | 656 | +510 |
+| Source lines | 241 | 366 | +125 |
+| Test:Source ratio | 0.61 | 1.79 | +1.18 |
+| Test layers | 1 | 3 | +2 |
+| Gherkin scenarios | 0 | 11 | +11 |
+
+---
+
+## Feature Presence
+
+| Capability | Condition A | Condition B |
+|-----------|:----------:|:----------:|
+| Service layer | ✗ | ✓ |
+| Repository layer (class-based) | ✗ | ✓ |
+| API versioning (`/api/v1/`) | ✗ | ✓ |
+| Authentication (bcrypt + JWT) | ✗ | ✓ |
+| Alembic migrations | ✗ | ✓ |
+| Makefile | ✗ | ✓ |
+| Specs directory | ✗ | ✓ |
+| BDD / Gherkin scenarios | ✗ | ✓ |
+| Unit tests | ✗ | ✓ |
+| Integration tests | ✓ | ✓ |
+| Anti-enumeration test | ✗ | ✓ |
+| `uv.lock` checked in | ✗ | ✓ |
+
+---
+
+## Key Findings
+
+1. **Security is the largest raw delta (+0.65).** Without AGENTS.md, the agent produced zero authentication. With AGENTS.md, it implemented bcrypt + JWT, password validation, email normalisation, and anti-enumeration responses — because Section 5 (Hard Constraints) mandates auth-by-default.
+
+2. **Spec adherence is the largest absolute gap (0.00 → 0.95).** The Feature Kickoff Protocol in AGENTS.md forced the agent to produce `specs/auth.md` and `tests/bdd/features/auth.feature` before writing any code. Without it, the agent skipped straight to implementation.
+
+3. **Code quality is the smallest delta (+0.10).** The model writes decent code either way — clean Pydantic v2, proper pagination, good naming. VibeOps doesn't make the code prettier; it makes the *system* more complete.
+
+4. **The constrained branch was faster to generate.** Counterintuitive: more rules = less decision paralysis = fewer wrong turns = faster completion. Constraints are faster than choices.
+
+5. **Tribal knowledge transferred.** The agent used `bcrypt` directly instead of `passlib` (Section 9 gotcha), used `sync_client` for BDD steps (Section 9 gotcha), and used `select()` over `session.query()` (Section 4). These are mistakes it would have had to discover and fix without AGENTS.md.
+
+---
+
+## Prompt Used (Both Conditions)
+
+```
+Build a user management API with the following requirements:
+- User model with fields: id, email, full_name, is_active, created_at
+- CRUD endpoints: create user, get user by id, list users with pagination, update user, delete user
+- Input validation on email format and required fields
+- Proper error responses for not found and duplicate email
+```
+
+
 
 ## What This Is
 
