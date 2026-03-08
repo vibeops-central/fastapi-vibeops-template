@@ -8,6 +8,9 @@
 >
 > Note: CLAUDE.md is a symlink to this file for Claude Code compatibility.
 > This file is agent-agnostic and works with any coding agent.
+>
+> Skills loaded alongside this file:
+> - vibeops-skill  → universal VibeOps methodology (workflows, protocols, evaluation)
 
 ---
 
@@ -97,6 +100,10 @@ uv run vibecheck .
 ├── specs/
 │   ├── adr/                  # Architecture Decision Records
 │   └── openapi.yaml          # API contract (auto-generated or hand-authored)
+├── .claude/
+│   └── skills/
+│       └── vibeops-skill/    # VibeOps universal methodology skill
+│           └── SKILL.md
 ├── vibecheck/                # Vibecheck Score computation library
 ├── experiments/              # MLflow experiment configs and results
 ├── docker/
@@ -148,8 +155,6 @@ Request → Router → Dependency → Service → Repository → Database
 
 ## 5. Hard Constraints (Non-Negotiables)
 
-> These are absolute rules. Do not work around them under any circumstances.
-
 - **Authentication:** All endpoints are authenticated by default via JWT dependency. Unauthenticated endpoints must be explicitly marked and approved.
 - **Authorization:** Role-based access is enforced at the service layer — never trust client-supplied roles.
 - **Secrets:** No secrets, API keys, or credentials in source code or committed files — ever.
@@ -163,178 +168,47 @@ Request → Router → Dependency → Service → Repository → Database
 
 ---
 
-## 6. Workflow Instructions
+## 6. Testing Rules
 
-### Brainstorm Mode
-When the user says **"change nothing"** or **"design only"**, enter planning mode:
-- Review the codebase and propose a design
-- Output a draft spec or Gherkin scenarios for review
-- Do NOT touch any files until explicitly told to proceed
-
-### Spec Types
-Different concerns live in different spec formats — use the right one:
-
-| What | Format | Location |
-|------|--------|----------|
-| Business behaviour | Gherkin | `tests/bdd/features/` |
-| Technical design | Markdown | `specs/` |
-| Architecture decisions | ADR Markdown | `specs/adr/` |
-| API contract | OpenAPI YAML | `specs/openapi.yaml` |
-| Non-functional requirements | Markdown | `specs/` |
-
-**Gherkin covers:** WHAT the system does from a user perspective — business rules, acceptance criteria, compliance behaviour. Written in plain language a non-technical stakeholder can read and approve.
-
-**specs/ covers:** WHY and HOW decisions were made — data models, architectural choices, performance requirements, security threat model, infrastructure constraints.
-
-**Both must exist for any significant feature.** Gherkin alone is not a complete spec.
-
-### Feature Kickoff Protocol
-When given a new feature name or business spec — even as a short description — automatically follow this protocol without being asked:
-
-1. **Enter design mode immediately** — do not write any code
-2. **Produce two files and nothing else:**
-   - Technical design doc → `specs/[feature].md`
-   - Gherkin scenarios → `tests/bdd/features/[feature].feature`
-3. **specs/[feature].md must contain:**
-   - Data model
-   - API endpoints
-   - Architectural decisions
-   - Any security or compliance considerations
-4. **Gherkin must be in plain business language:**
-   - No Python, no HTTP verbs, no field names in Given/When/Then
-   - Readable by a non-technical stakeholder
-5. **Wait for explicit approval** before creating any other files
-6. Only proceed to implementation when the user says **"proceed"**
-
-This protocol triggers automatically on any message in the form:
-- "New feature: [description]"
-- "Build: [description]"
-- "Implement: [description]"
-- Any plain English business spec provided without a prior design
-
-### Spec-First Rule
-Before implementing any significant feature:
-1. Check `/specs` for an existing technical design document
-2. Check `tests/bdd/features/` for existing Gherkin scenarios
-3. If neither exists, trigger the Feature Kickoff Protocol above
-4. If a spec exists, **generate Gherkin scenarios from it** before writing any code
-5. Both the technical spec and Gherkin scenarios must be reviewed and approved before proceeding
-6. Never write a route handler, Pydantic schema, or service method without both approved
-
-### Checkpointing
-At the end of each completed task:
-- Remind the user to commit the current state
-- Suggest a meaningful commit message (e.g., `feat(users): add email verification endpoint`)
-- Follow **Conventional Commits** format: `type(scope): description`
-
-### Self-Updating Protocol
-When working in this codebase, actively look for opportunities to improve this file.
-Suggest an update to AGENTS.md when you:
-- Correct a mistake that could recur (add it to Section 9 — Tribal Knowledge)
-- Discover a missing convention that caused ambiguity
-- Add a new dependency that has usage rules
-- Identify a pattern being used consistently that isn't documented
-- Encounter a constraint that isn't captured but should be enforced
-
-When suggesting an update:
-1. State clearly: "I suggest adding this to AGENTS.md — [section]: [rule]"
-2. Wait for explicit approval before modifying the file
-3. After approval, update the file AND add an entry to the Change Log (Section 11)
-
----
-
-## 7. Testing Rules
-
-### General
 - **Never delete, skip, or modify existing tests** to make them pass — this is a critical violation
-- **Never modify test assertions** without explicit user approval
 - All new endpoints must have integration tests in `tests/integration/`
 - All new service methods must have unit tests in `tests/unit/`
-- Use **pytest-asyncio** for async test functions (`asyncio_mode = "auto"` in `pyproject.toml` — do not change this)
-- Use **httpx.AsyncClient** (not TestClient) for async endpoint tests
+- Use **pytest-asyncio** for async test functions (`asyncio_mode = "auto"` in `pyproject.toml`)
+- Use **httpx.AsyncClient** for async endpoint tests
 - Use **factory_boy** or fixtures for test data — no hardcoded test values
-- Mock external services (email, payment, third-party APIs) — never call real services in tests
+- Mock external services — never call real services in tests
 - Minimum coverage target: **80%** for the service layer
 
-### BDD / Gherkin Rules
-- Feature files live in `tests/bdd/features/` — one file per resource (auth.feature, todos.feature)
-- Step definitions live in `tests/bdd/` — mirroring the feature file name
-- Gherkin scenarios are generated from specs, **not from code** — never reverse-engineer scenarios from existing implementation
-- If a spec is ambiguous, surface the ambiguity as a question before writing the scenario — do not resolve ambiguity silently in code
-- Scenarios must be written in **business language** — no Python, no HTTP verbs, no field names in Given/When/Then steps
-- Step definitions must use the **`sync_client` fixture** (a `starlette.testclient.TestClient` defined in `tests/bdd/conftest.py`) — all BDD step functions must be synchronous (see §9 for why)
-- **Never rewrite a scenario to match broken behaviour** — fix the code, not the scenario
-- Compliance-related behaviours must have a Gherkin scenario — they are the audit trail
-
 ---
 
-## 8. Code Review Checklist (Agent Self-Review)
+## 7. Known Gotchas & Tribal Knowledge
 
-Before declaring a task complete, verify:
-- [ ] Technical spec exists in `specs/` for this feature
-- [ ] Gherkin scenario exists and is approved for this feature
-- [ ] No hardcoded secrets, credentials, or environment values
-- [ ] All new endpoints have `response_model` declared
-- [ ] All new endpoints are authenticated (or explicitly approved as public)
-- [ ] Business logic is in the service layer, not in routers or models
-- [ ] Database access is in the repository layer, not in services directly
-- [ ] New dependencies added to `pyproject.toml` via `uv add`
-- [ ] Alembic migration generated and reviewed if schema changed
-- [ ] Unit and integration tests added for all new code
-- [ ] BDD feature file updated or created for new API behaviour
-- [ ] No existing tests deleted or skipped
-- [ ] Ruff lint and mypy type checks pass
-- [ ] AGENTS.md updated if a new convention or correction was introduced
-
----
-
-## 9. Known Gotchas & Tribal Knowledge
-
-> Add corrections here as they are discovered during development.
-> If you find something worth adding, propose it using the Self-Updating Protocol (Section 6).
-
-- **Session scope:** The DB session dependency uses `yield` — do not close it manually inside services or it will break the request lifecycle
+- **Session scope:** The DB session dependency uses `yield` — do not close it manually inside services
 - **Async pitfall:** Do not use `time.sleep()` in async code — use `await asyncio.sleep()` instead
-- **Alembic + async:** Alembic runs synchronously by default — use the async migration setup in `alembic/env.py`, do not replace it
+- **Alembic + async:** Use the async migration setup in `alembic/env.py`, do not replace it
 - **CORS:** `ALLOWED_ORIGINS` must be set explicitly in production — wildcard `*` is only permitted in local dev
-- **Pydantic v2:** This project uses Pydantic v2 — use `model_validate()` not `parse_obj()`, and `model_dump()` not `dict()`
-- **Redis cache:** Cache keys follow the pattern `{resource}:{id}:{version}` — do not invent new patterns without updating this doc
-- **pytest-bdd async (confirmed broken in 8.x):** pytest-bdd 8.x does not await async step functions — even with `target_fixture`, the coroutine is passed unawaited to subsequent steps. All BDD step functions must be **synchronous**. Use the `sync_client` fixture (`starlette.testclient.TestClient`) in `tests/bdd/conftest.py` for HTTP calls in steps. `asyncio_mode = "auto"` is still required and must not be removed — it handles async fixtures like `db_engine` and `sync_client` setup.
-- **passlib + bcrypt incompatibility:** `passlib 1.7.4` is incompatible with `bcrypt 4.x+` (the `__about__` attribute was removed). Do not add `passlib` as a dependency — use `bcrypt` directly. See `src/core/security.py` for the correct usage pattern (`bcrypt.hashpw` / `bcrypt.checkpw`).
-- **Gherkin directionality:** Scenarios describe WHAT the system guarantees, not HOW it works — step definitions handle the how
+- **Pydantic v2:** Use `model_validate()` not `parse_obj()`, and `model_dump()` not `dict()`
+- **Redis cache:** Cache keys follow the pattern `{resource}:{id}:{version}` — do not invent new patterns
+- **pytest-bdd async (confirmed broken in 8.x):** All BDD step functions must be **synchronous**. Use the `sync_client` fixture (`starlette.testclient.TestClient`) in `tests/bdd/conftest.py`. `asyncio_mode = "auto"` is still required — do not remove it.
+- **passlib + bcrypt incompatibility:** Do not add `passlib` — use `bcrypt` directly (`bcrypt.hashpw` / `bcrypt.checkpw`)
 - **Symlink:** CLAUDE.md is a symlink to this file — always edit AGENTS.md, never CLAUDE.md directly
 
 ---
 
-## 10. VibeOps Principles
+## 8. Change Log
 
-> This template is built on the VibeOps framework. These principles govern how AI agents operate here.
-
-- **We validate everything** — "just trust the AI" is not an engineering practice
-- **We measure actual impact** — "it feels faster" is not a metric
-- **We adopt deliberately, not desperately** — every tool earns its place
-- **We demand evidence-based practices** — not cargo-culted "best practices"
-- **We move fast and build things that work** — not fast and break things
-- Configuration-driven development where AI tools operate within defined guardrails
-- Test-first workflows where validation is automatic, not optional
-- Sustainable AI adoption that improves code quality, not just velocity
-- In this brave new world, the ability to code a system matters less than the taste to know what it should become
-
----
-
-## 11. Change Log
-
-| Date       | Change                                                | Author         |
-|------------|-------------------------------------------------------|----------------|
-| 2025-01-01 | Initial AGENTS.md created                             | Natu Lauchande |
-| 2025-01-15 | Added async SQLAlchemy 2.0 conventions                | Natu Lauchande |
-| 2025-02-01 | Added BDD/Gherkin rules and spec-first workflow       | Natu Lauchande |
-| 2025-02-20 | Added VibeOps principles section                      | Natu Lauchande |
-| 2025-02-20 | Added self-updating protocol                          | Natu Lauchande |
-| 2025-02-21 | Renamed primary file from CLAUDE.md to AGENTS.md      | Natu Lauchande |
-| 2025-02-21 | CLAUDE.md is now a symlink to AGENTS.md               | Natu Lauchande |
-| 2025-02-21 | Added spec types table and dual-spec rule             | Natu Lauchande |
-| 2025-02-21 | Replaced feature kickoff prompt with auto protocol    | Natu Lauchande |
-| 2026-02-21 | Corrected BDD client rule: steps must use sync_client | Claude         |
-| 2026-02-21 | Added pytest-bdd 8.x async gotcha with full workaround| Claude         |
-| 2026-02-21 | Added passlib/bcrypt incompatibility gotcha           | Claude         |
+| Date       | Change                                                                        | Author         |
+|------------|-------------------------------------------------------------------------------|----------------|
+| 2025-01-01 | Initial AGENTS.md created                                                     | Natu Lauchande |
+| 2025-01-15 | Added async SQLAlchemy 2.0 conventions                                        | Natu Lauchande |
+| 2025-02-01 | Added BDD/Gherkin rules and spec-first workflow                               | Natu Lauchande |
+| 2025-02-20 | Added VibeOps principles section                                              | Natu Lauchande |
+| 2025-02-20 | Added self-updating protocol                                                  | Natu Lauchande |
+| 2025-02-21 | Renamed primary file from CLAUDE.md to AGENTS.md                              | Natu Lauchande |
+| 2025-02-21 | CLAUDE.md is now a symlink to AGENTS.md                                       | Natu Lauchande |
+| 2025-02-21 | Added spec types table and dual-spec rule                                     | Natu Lauchande |
+| 2025-02-21 | Replaced feature kickoff prompt with auto protocol                            | Natu Lauchande |
+| 2026-02-21 | Corrected BDD client rule: steps must use sync_client                         | Claude         |
+| 2026-02-21 | Added pytest-bdd 8.x async gotcha with full workaround                        | Claude         |
+| 2026-02-21 | Added passlib/bcrypt incompatibility gotcha                                   | Claude         |
+| 2026-03-08 | Extracted methodology → .claude/skills/vibeops-skill; AGENTS.md is config only | Claude       |
