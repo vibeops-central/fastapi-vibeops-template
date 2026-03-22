@@ -116,11 +116,7 @@ Key conventions:
 When given a new feature — even as a short description — follow this protocol automatically:
 
 1. **Enter design mode** — do not write any code
-2. **Load relevant Skills** from `skills/` before proceeding:
-   - Auth-related → `skills/auth.md`
-   - Schema changes → `skills/migrations.md`
-   - Test setup → `skills/testing.md`
-   - CRUD resources → `skills/crud.md`
+2. **Activate relevant Skills** from the available skills (auth, testing, migrations, crud) based on the feature description — skills provide domain-specific rules and gotchas
 3. **Produce two files:**
    - `specs/[feature].md` — data model, endpoints, architecture decisions, security/compliance notes
    - `tests/bdd/features/[feature].feature` — Gherkin in plain business language (no Python, no HTTP verbs)
