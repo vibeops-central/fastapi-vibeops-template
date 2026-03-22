@@ -35,20 +35,23 @@ New feature: user registration and JWT authentication
 5. Add a rule to AGENTS.md for each failure
 6. Repeat from step 1
 
-**Measured outcome:** Tests passing / total, manual fixes required
+**Measured outcome:** Tests passing / total, manual fixes required, wall clock time
 
 ---
 
 ## Results
 
-| Round | AGENTS.md State | Tests | Manual Fixes |
-|-------|----------------|-------|--------------|
-| 1 | v0.1.0 — original | 2 / 19 | Yes |
-| 2 | +3 gotchas added | 0 / 19 | Yes |
-| 3 | +7 gotchas added | **15 / 15** | **Zero** |
+| Round | AGENTS.md State | Tests | Manual Fixes | Time (design) | Time (implement) |
+|-------|----------------|-------|--------------|---------------|-----------------|
+| 1 | v0.1.0 — original | 2 / 19 | Yes | ~60s | ~4 min (timeout) |
+| 2 | +3 gotchas | 0 / 19 | Yes | ~55s | ~4 min (timeout) |
+| 3 | +7 gotchas | **15 / 15** | **Zero** | ~58s | ~4 min + 90s finish |
 
 **Coverage on final run:** 84%  
-**Reproducibility:** Confirmed on independent run (separate clone, same result)
+**Reproducibility:** Confirmed on independent run (same results, same timing profile)
+
+> **Token usage:** Not captured — requires MLflow + Bedrock CloudWatch integration (Phase 2 / issue #8).
+> Approximate estimate based on Claude Sonnet 4.5 pricing: ~15-25k tokens per full run (design + implement phases).
 
 ---
 
