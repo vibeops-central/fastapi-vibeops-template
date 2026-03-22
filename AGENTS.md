@@ -3,8 +3,8 @@
 > Every correction, discovery, or new pattern is a candidate for inclusion.
 > Propose → Get approval → Update file → Log the change.
 >
-> Repo: https://github.com/natulauchande/fastapi-vibeops-template
-> Framework: https://github.com/natulauchande/vibeops
+> Repo: https://github.com/vibeops-central/fastapi-vibeops-template
+> Framework: https://github.com/vibeops-central/vibeops
 >
 > Note: CLAUDE.md is a symlink to this file for Claude Code compatibility.
 > This file is agent-agnostic and works with any coding agent.
@@ -303,6 +303,13 @@ Before declaring a task complete, verify:
 - **passlib + bcrypt incompatibility:** `passlib 1.7.4` is incompatible with `bcrypt 4.x+` (the `__about__` attribute was removed). Do not add `passlib` as a dependency — use `bcrypt` directly. See `src/core/security.py` for the correct usage pattern (`bcrypt.hashpw` / `bcrypt.checkpw`).
 - **Gherkin directionality:** Scenarios describe WHAT the system guarantees, not HOW it works — step definitions handle the how
 - **Symlink:** CLAUDE.md is a symlink to this file — always edit AGENTS.md, never CLAUDE.md directly
+- **`pydantic[email]` required for `EmailStr`:** When any schema uses `EmailStr`, you must add `pydantic[email]` (not just `pydantic`) as a dependency — plain `pydantic` does not bundle `email-validator`. Always run `uv add 'pydantic[email]'` when using email validation.
+- **SQLite vs Postgres pool config:** `session.py` uses Postgres-specific pool args (`pool_size`, `max_overflow`) that crash when running tests against SQLite. The engine creation must conditionally skip these args when the DATABASE_URL is a SQLite URL. Check `if "sqlite" in str(DATABASE_URL)` before passing pool kwargs.
+- **BDD step files are mandatory:** Every `.feature` file must have a corresponding step definition file in `tests/bdd/`. During the "proceed" phase, both the feature file AND the step file must be created — the feature file alone is not runnable.
+- **SQLite test setup — tables must be created:** The BDD/test conftest must call `await conn.run_sync(Base.metadata.create_all)` inside the `db_engine` fixture before any tests run. Without this, SQLite starts empty and every DB call fails with `no such table`. This is not needed for Postgres (Alembic handles it) but is required for in-memory SQLite test runs.
+- **Pydantic validation errors return 422, not 400:** FastAPI returns `422 Unprocessable Entity` for Pydantic schema validation failures (invalid email format, missing fields, type errors). Step definitions and test assertions must expect `422` for input validation failures, `400` for explicit business rule rejections (e.g. duplicate email), and `409` for conflicts. Do not conflate these.
+- **Unauthenticated requests return 401, not 403:** FastAPI's `HTTPBearer` dependency returns `401 Unauthorized` when no token or an invalid/expired token is provided. `403 Forbidden` is for authenticated users who lack permission. Step definitions asserting auth failures must expect `401`, not `403`.
+- **hatchling build backend requires explicit package config:** If using `hatchling` as the build backend (instead of `setuptools`), you must add `[tool.hatch.build.targets.wheel]\npackages = ["src"]` to `pyproject.toml`. Without it, `uv sync` fails with "Unable to determine which files to ship". Prefer `setuptools` unless there is a specific reason to use hatchling.
 
 ---
 
@@ -338,3 +345,11 @@ Before declaring a task complete, verify:
 | 2026-02-21 | Corrected BDD client rule: steps must use sync_client | Claude         |
 | 2026-02-21 | Added pytest-bdd 8.x async gotcha with full workaround| Claude         |
 | 2026-02-21 | Added passlib/bcrypt incompatibility gotcha           | Claude         |
+| 2026-03-22 | Fixed repo URLs (natulauchande → vibeops-central org) | Claw           |
+| 2026-03-22 | Added pydantic[email] gotcha for EmailStr usage       | Claw           |
+| 2026-03-22 | Added SQLite vs Postgres pool config gotcha           | Claw           |
+| 2026-03-22 | Clarified BDD step files are mandatory alongside .feature files | Claw  |
+| 2026-03-22 | Added SQLite table creation gotcha (create_all in conftest)     | Claw  |
+| 2026-03-22 | Added 422 vs 400 status code gotcha for Pydantic validation     | Claw  |
+| 2026-03-22 | Added 401 vs 403 gotcha for unauthenticated requests            | Claw  |
+| 2026-03-22 | Added hatchling build backend requires packages config          | Claw  |
