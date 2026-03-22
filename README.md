@@ -179,4 +179,4 @@ Coming in Phase 3. Tracked via MLflow in Phase 4.
 
 MIT — use it, fork it, adapt it, share it freely.
 
-Built by [Natu Lauchande](https://github.com/natulauchande) · #VibeOps
+Built by [Natu Lauchande](https://github.com/nlauchande) · #VibeOps
