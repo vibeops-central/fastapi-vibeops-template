@@ -53,12 +53,25 @@ skills/
 
 ---
 
+## Metrics to Capture
+
+| Metric | How | Target |
+|--------|-----|--------|
+| Tests passing | `pytest` output | 15/15 (no regression) |
+| Manual fixes | Human observation | Zero |
+| Skill files loaded | Agent output / trace | auth.md + testing.md |
+| Core AGENTS.md size | `wc -l AGENTS.md` | < 150 lines |
+| Design phase time | `time claude -p "New feature..."` | < 90s |
+| Implement phase time | `time claude --continue -p "proceed"` | < 8 min |
+| Token usage | AWS Bedrock CloudWatch (if available) | TBD — baseline from Exp 001 |
+
 ## Success Criteria
 
 - [ ] 15/15 tests passing (no regression)
 - [ ] Zero manual fixes required
 - [ ] Agent correctly self-loaded `skills/auth.md` and `skills/testing.md`
 - [ ] Core AGENTS.md < 150 lines
+- [ ] Total wall clock time comparable to Experiment 001 (~5 min)
 
 ## Failure Criteria
 
